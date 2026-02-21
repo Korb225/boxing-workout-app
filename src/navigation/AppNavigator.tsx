@@ -7,6 +7,7 @@ import CategoriesScreen from '../screens/CategoriesScreen';
 import WorkoutsScreen from '../screens/WorkoutsScreen';
 import TimerScreen from '../screens/TimerScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import DashboardScreen from '../screens/DashboardScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -33,6 +34,13 @@ export default function AppNavigator() {
           headerTintColor: theme.text,
         }}
       >
+        <Tab.Screen
+          name="Dashboard"
+          component={DashboardScreen}
+          options={{
+            tabBarIcon: ({ focused, color }) => <TabIcon icon="🏠" focused={focused} color={color} />,
+          }}
+        />
         <Tab.Screen
           name="Categories"
           component={CategoriesScreen}
