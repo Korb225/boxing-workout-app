@@ -1,4 +1,4 @@
-import { Category, Exercise, TimerConfig, Preset, Cycle, COLOR_PALETTE } from '../types';
+import { Category, Exercise, TimerConfig, Preset } from '../types';
 
 export const defaultCategories: Category[] = [
   { id: 'explosiveness', name: 'Explosiveness', color: '#BDFF2E', icon: '⚡' },
@@ -8,43 +8,8 @@ export const defaultCategories: Category[] = [
   { id: 'technique', name: 'Technique', color: '#FFEAA7', icon: '🥊' },
 ];
 
-// Default presets with cycles
-export const defaultPresets: Preset[] = [
-  {
-    id: 'preset-1',
-    name: 'Prepare',
-    color: '#FF8F00', // Amber/Orange
-    cycles: [
-      {
-        id: 'cycle-1',
-        name: 'PREPARE',
-        duration: 5,
-        color: '#FF8F00',
-      },
-    ],
-    createdAt: Date.now(),
-  },
-  {
-    id: 'preset-2',
-    name: 'Boxing',
-    color: '#43A047', // Green
-    cycles: [
-      {
-        id: 'cycle-1',
-        name: 'WORK',
-        duration: 180, // 3 minutes
-        color: '#43A047',
-      },
-      {
-        id: 'cycle-2',
-        name: 'REST',
-        duration: 60, // 1 minute
-        color: '#00897B', // Teal
-      },
-    ],
-    createdAt: Date.now(),
-  },
-];
+// No default presets - user creates their own
+export const defaultPresets: Preset[] = [];
 
 export const defaultExercises: Exercise[] = [
   { id: 'ex1', categoryId: 'explosiveness', name: 'Speed Bag', description: '3 min rounds, focus on speed' },

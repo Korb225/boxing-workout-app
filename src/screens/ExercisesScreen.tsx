@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, StyleSheet, Platform } from 'react-native';
 import { useStore, useTheme } from '../store';
 import { Category, Exercise } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import * as ImagePicker from 'expo-image-picker';
-import { Video } from 'expo-av';
+
+let Video: any = null;
+if (Platform.OS !== 'web') {
+  Video = require('expo-av').Video;
+}
 
 const SectionHeader = ({ title }: { title: string }) => {
   const theme = useTheme();

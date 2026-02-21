@@ -81,10 +81,15 @@ export interface Cycle {
   color: TimerColor;
 }
 
+export interface WorkoutSet {
+  id: string;
+  repeat: number; // how many times to repeat this set
+  cycles: Cycle[];
+}
+
 export interface Preset {
   id: string;
   name: string;
-  color: TimerColor;
-  cycles: Cycle[];
+  sets: WorkoutSet[];
   createdAt?: number;
 }

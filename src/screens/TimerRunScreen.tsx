@@ -117,7 +117,7 @@ export default function TimerRunScreen({ cycles, onExit }: TimerRunScreenProps) 
           onExit();
           return 100;
         }
-        return prev + 5;
+        return prev + 20;
       });
     }, 100);
   };
