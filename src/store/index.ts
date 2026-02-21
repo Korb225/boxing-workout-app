@@ -39,7 +39,7 @@ export const useStore = create<AppState>((set, get) => ({
   exercises: defaultExercises,
   workouts: [],
   timerConfig: defaultTimerConfig,
-  themeMode: 'light',
+  themeMode: 'dark',
   customTheme: null,
 
   setCategories: (categories) => {
@@ -128,11 +128,14 @@ export const useStore = create<AppState>((set, get) => ({
         exercises: exercises ? JSON.parse(exercises) : defaultExercises,
         workouts: workouts ? JSON.parse(workouts) : [],
         timerConfig: timerConfig ? JSON.parse(timerConfig) : defaultTimerConfig,
-        themeMode: themeMode ? JSON.parse(themeMode) : 'light',
+        themeMode: themeMode ? JSON.parse(themeMode) : 'dark',
         customTheme: customTheme ? JSON.parse(customTheme) : null,
       });
     } catch (error) {
       console.error('Failed to load data:', error);
+      set({
+        themeMode: 'dark',
+      });
     }
   },
 

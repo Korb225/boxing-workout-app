@@ -1,7 +1,7 @@
 import { Category, Exercise, TimerConfig } from '../types';
 
 export const defaultCategories: Category[] = [
-  { id: 'explosiveness', name: 'Explosiveness', color: '#FF6B6B', icon: '⚡' },
+  { id: 'explosiveness', name: 'Explosiveness', color: '#BDFF2E', icon: '⚡' },
   { id: 'endurance', name: 'Endurance', color: '#4ECDC4', icon: '🏃' },
   { id: 'strength', name: 'Strength', color: '#45B7D1', icon: '💪' },
   { id: 'stability', name: 'Stability', color: '#96CEB4', icon: '🎯' },
@@ -36,21 +36,23 @@ export const defaultTimerConfig: TimerConfig = {
 };
 
 export const lightTheme = {
-  primary: '#FF6B6B',
+  primary: '#BDFF2E',
   secondary: '#4ECDC4',
-  background: '#F7F7F7',
-  card: '#FFFFFF',
+  background: '#F5F5F5',
+  card: 'rgba(255, 255, 255, 0.9)',
   text: '#1A1A2E',
   textSecondary: '#666666',
-  border: '#E0E0E0',
+  border: 'rgba(0, 0, 0, 0.08)',
+  primaryGlow: 'rgba(189, 255, 46, 0.25)',
 };
 
 export const darkTheme = {
-  primary: '#FF6B6B',
+  primary: '#BDFF2E',
   secondary: '#4ECDC4',
-  background: '#1A1A2E',
-  card: '#2D2D44',
-  text: '#F7F7F7',
-  textSecondary: '#AAAAAA',
-  border: '#3D3D5C',
+  background: '#0A0A0A',
+  card: 'rgba(30, 30, 30, 0.7)',
+  text: '#FFFFFF',
+  textSecondary: '#A0A0A0',
+  border: 'rgba(255, 255, 255, 0.08)',
+  primaryGlow: 'rgba(189, 255, 46, 0.35)',
 };

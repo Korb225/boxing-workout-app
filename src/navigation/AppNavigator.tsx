@@ -1,75 +1,117 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { NavigationContainer, DrawerContentComponentProps } from '@react-navigation/native';
+import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useTheme } from '../store';
 import CategoriesScreen from '../screens/CategoriesScreen';
 import WorkoutsScreen from '../screens/WorkoutsScreen';
 import TimerScreen from '../screens/TimerScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 
-const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
 
-const TabIcon = ({ icon, focused, color }: { icon: string; focused: boolean; color: string }) => (
-  <Text style={{ fontSize: focused ? 26 : 24 }}>{icon}</Text>
-);
-
-export default function AppNavigator() {
+function CustomDrawerContent(props: DrawerContentComponentProps) {
   const theme = useTheme();
+  const currentRoute = props.state.routes[props.state.index].name;
+
+  const navItems = [
+    { name: 'Dashboard', icon: '🏠', label: 'Dashboard' },
+    { name: 'Categories', icon: '📁', label: 'Categories' },
+    { name: 'Workouts', icon: '🏋️', label: 'Workouts' },
+    { name: 'Timer', icon: '⏱️', label: 'Timer' },
+    { name: 'Profile', icon: '👤', label: 'Profile' },
+    { name: 'Settings', icon: '⚙️', label: 'Settings' },
+  ];
 
   return (
+    <DrawerContentScrollView {...props} contentContainerStyle={{ padding: 0 }}>
+      <View style={[styles.drawerHeader, { backgroundColor: theme.card }]}>
+        <Text style={[styles.logoText, { color: theme.primary }]}>PLANER</Text>
+      </View>
+
+      <View style={styles.navSection}>
+        {navItems.map((item) => {
+          const isActive = currentRoute === item.name;
+          return (
+            <TouchableOpacity
+              key={item.name}
+              onPress={() => props.navigation.navigate(item.name)}
+              style={[
+                styles.navItem,
+                { backgroundColor: isActive ? theme.primary + '15' : 'transparent' },
+                isActive && { borderLeftWidth: 3, borderLeftColor: theme.primary },
+              ]}
+            >
+              <Text style={{ fontSize: 20, marginRight: 14 }}>{item.icon}</Text>
+              <Text 
+                style={[
+                  styles.navLabel, 
+                  { color: isActive ? theme.primary : theme.textSecondary }
+                ]}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </DrawerContentScrollView>
+  );
+}
+
+export default function AppNavigator() {
+  return (
     <NavigationContainer>
-      <Tab.Navigator
+      <Drawer.Navigator
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
-          tabBarActiveTintColor: theme.primary,
-          tabBarInactiveTintColor: theme.textSecondary,
-          tabBarStyle: {
-            backgroundColor: theme.card,
-            borderTopColor: theme.border,
+          headerShown: false,
+          drawerType: 'front',
+          drawerStyle: {
+            width: 280,
+            backgroundColor: 'transparent',
           },
-          headerStyle: {
-            backgroundColor: theme.card,
-          },
-          headerTintColor: theme.text,
+          overlayColor: 'rgba(0,0,0,0.7)',
+          swipeEnabled: true,
+          swipeEdgeWidth: 50,
         }}
       >
-        <Tab.Screen
-          name="Dashboard"
-          component={DashboardScreen}
-          options={{
-            tabBarIcon: ({ focused, color }) => <TabIcon icon="🏠" focused={focused} color={color} />,
-          }}
-        />
-        <Tab.Screen
-          name="Categories"
-          component={CategoriesScreen}
-          options={{
-            tabBarIcon: ({ focused, color }) => <TabIcon icon="📁" focused={focused} color={color} />,
-          }}
-        />
-        <Tab.Screen
-          name="Workouts"
-          component={WorkoutsScreen}
-          options={{
-            tabBarIcon: ({ focused, color }) => <TabIcon icon="🏋️" focused={focused} color={color} />,
-          }}
-        />
-        <Tab.Screen
-          name="Timer"
-          component={TimerScreen}
-          options={{
-            tabBarIcon: ({ focused, color }) => <TabIcon icon="⏱️" focused={focused} color={color} />,
-          }}
-        />
-        <Tab.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            tabBarIcon: ({ focused, color }) => <TabIcon icon="⚙️" focused={focused} color={color} />,
-          }}
-        />
-      </Tab.Navigator>
+        <Drawer.Screen name="Dashboard" component={DashboardScreen} />
+        <Drawer.Screen name="Categories" component={CategoriesScreen} />
+        <Drawer.Screen name="Workouts" component={WorkoutsScreen} />
+        <Drawer.Screen name="Timer" component={TimerScreen} />
+        <Drawer.Screen name="Profile" component={ProfileScreen} />
+        <Drawer.Screen name="Settings" component={SettingsScreen} />
+      </Drawer.Navigator>
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  drawerHeader: {
+    padding: 24,
+    paddingTop: 50,
+    marginBottom: 10,
+  },
+  logoText: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: 4,
+  },
+  navSection: {
+    paddingHorizontal: 12,
+  },
+  navItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  navLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

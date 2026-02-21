@@ -1,12 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, StyleSheet } from 'react-native';
 import { useStore, useTheme } from '../store';
 import { Category, Exercise } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import * as ImagePicker from 'expo-image-picker';
 import { Video } from 'expo-av';
 
-export default function CategoriesScreen() {
+const SectionHeader = ({ title }: { title: string }) => {
+  const theme = useTheme();
+  return (
+    <Text style={{ 
+      fontSize: 13, 
+      fontWeight: '600', 
+      color: theme.textSecondary, 
+      textTransform: 'uppercase', 
+      letterSpacing: 1.5,
+      marginBottom: 14,
+      marginLeft: 4,
+    }}>
+      {title}
+    </Text>
+  );
+};
+
+export default function CategoriesScreen({ navigation }: { navigation: any }) {
   const theme = useTheme();
   const { categories, exercises, addExercise, updateExercise, deleteExercise, addCategory } = useStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -77,7 +94,7 @@ export default function CategoriesScreen() {
     addCategory({
       id: uuidv4(),
       name: newCategoryName,
-      color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+      color: '#BDFF2E',
       icon: '📦',
     });
     setNewCategoryName('');
@@ -93,64 +110,125 @@ export default function CategoriesScreen() {
   if (selectedCategory) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <View style={{ padding: 16, backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => setSelectedCategory(null)} style={{ marginRight: 16 }}>
-            <Text style={{ fontSize: 24, color: theme.text }}>←</Text>
+        <View style={{ padding: 18, backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.border }}>
+          <TouchableOpacity 
+            onPress={() => setSelectedCategory(null)} 
+            activeOpacity={0.7}
+            style={{ padding: 8, marginRight: 8 }}
+          >
+            <Text style={{ fontSize: 24, color: theme.primary }}>←</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text, flex: 1 }}>
-            {selectedCategory.name}
-          </Text>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontSize: 22, marginRight: 10 }}>{selectedCategory.icon}</Text>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: theme.text, letterSpacing: 0.5 }}>
+              {selectedCategory.name}
+            </Text>
+          </View>
           <TouchableOpacity
             onPress={() => {
               setIsEditMode(false);
               setNewExercise({ name: '', description: '', videoUri: '' });
               setModalVisible(true);
             }}
+            activeOpacity={0.7}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: theme.primary + '15',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
           >
-            <Text style={{ fontSize: 24, color: theme.primary }}>+</Text>
+            <Text style={{ fontSize: 24, color: theme.primary, fontWeight: '700' }}>+</Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={{ flex: 1, padding: 16 }}>
+        <ScrollView style={{ flex: 1, padding: 20 }} showsVerticalScrollIndicator={false}>
           {categoryExercises.length === 0 ? (
-            <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 40 }}>
-              No exercises yet. Tap + to add one.
-            </Text>
+            <View style={{ alignItems: 'center', marginTop: 80 }}>
+              <View style={{ 
+                width: 80, 
+                height: 80, 
+                borderRadius: 40, 
+                backgroundColor: theme.card, 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                marginBottom: 20,
+                borderWidth: 1,
+                borderColor: theme.border,
+              }}>
+                <Text style={{ fontSize: 36 }}>🥊</Text>
+              </View>
+              <Text style={{ color: theme.text, textAlign: 'center', fontSize: 18, fontWeight: '600' }}>
+                No exercises yet
+              </Text>
+              <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 8, fontSize: 14 }}>
+                Tap + to add your first exercise
+              </Text>
+            </View>
           ) : (
-            categoryExercises.map((exercise) => (
-              <TouchableOpacity
-                key={exercise.id}
-                style={{ backgroundColor: theme.card, borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: theme.border }}
-                onPress={() => {
-                  setIsEditMode(true);
-                  setNewExercise({ name: exercise.name, description: exercise.description || '', videoUri: exercise.videoUri || '' });
-                  setModalVisible(true);
-                }}
-                onLongPress={() => handleDeleteExercise(exercise.id)}
-              >
-                <Text style={{ fontSize: 18, fontWeight: '600', color: theme.text }}>{exercise.name}</Text>
-                {exercise.description && (
-                  <Text style={{ color: theme.textSecondary, marginTop: 4 }}>{exercise.description}</Text>
-                )}
-                {exercise.videoUri && (
-                  <View style={{ marginTop: 8, height: 150, borderRadius: 8, overflow: 'hidden' }}>
-                    <Video
-                      source={{ uri: exercise.videoUri }}
-                      style={{ flex: 1 }}
-                      useNativeControls
-                      resizeMode="contain"
-                    />
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))
+            <>
+              <SectionHeader title={`${categoryExercises.length} Exercise${categoryExercises.length !== 1 ? 's' : ''}`} />
+              {categoryExercises.map((exercise) => (
+                <TouchableOpacity
+                  key={exercise.id}
+                  activeOpacity={0.75}
+                  style={{ 
+                    backgroundColor: theme.card, 
+                    borderRadius: 18, 
+                    padding: 18, 
+                    marginBottom: 14, 
+                    borderWidth: 1, 
+                    borderColor: theme.border,
+                    shadowColor: selectedCategory.color,
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 0.12,
+                    shadowRadius: 12,
+                    elevation: 4,
+                  }}
+                  onPress={() => {
+                    setIsEditMode(true);
+                    setNewExercise({ name: exercise.name, description: exercise.description || '', videoUri: exercise.videoUri || '' });
+                    setModalVisible(true);
+                  }}
+                  onLongPress={() => handleDeleteExercise(exercise.id)}
+                >
+                  <Text style={{ fontSize: 19, fontWeight: '700', color: theme.text, letterSpacing: 0.3 }}>{exercise.name}</Text>
+                  {exercise.description && (
+                    <Text style={{ color: theme.textSecondary, marginTop: 6, fontSize: 14, lineHeight: 20 }}>{exercise.description}</Text>
+                  )}
+                  {exercise.videoUri && (
+                    <View style={{ marginTop: 14, height: 140, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: theme.border }}>
+                      <Video
+                        source={{ uri: exercise.videoUri }}
+                        style={{ flex: 1 }}
+                        useNativeControls
+                        resizeMode="contain"
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </>
           )}
         </ScrollView>
 
         <Modal visible={isModalVisible} animationType="slide" transparent>
-          <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <View style={{ backgroundColor: theme.card, margin: 20, borderRadius: 16, padding: 20 }}>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text, marginBottom: 16 }}>
+          <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)', padding: 20 }}>
+            <View style={{ 
+              backgroundColor: theme.card, 
+              borderRadius: 24, 
+              padding: 24, 
+              borderWidth: 1, 
+              borderColor: theme.border,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.3,
+              shadowRadius: 20,
+              elevation: 10,
+            }}>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: theme.text, marginBottom: 24, letterSpacing: 0.5 }}>
                 {isEditMode ? 'Edit Exercise' : 'Add Exercise'}
               </Text>
               <TextInput
@@ -158,39 +236,67 @@ export default function CategoriesScreen() {
                 placeholderTextColor={theme.textSecondary}
                 value={newExercise.name}
                 onChangeText={(text) => setNewExercise({ ...newExercise, name: text })}
-                style={{ backgroundColor: theme.background, color: theme.text, padding: 12, borderRadius: 8, marginBottom: 12 }}
+                style={{ 
+                  backgroundColor: 'rgba(0,0,0,0.3)', 
+                  color: theme.text, 
+                  padding: 16, 
+                  borderRadius: 14, 
+                  marginBottom: 14,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  fontSize: 16,
+                  fontWeight: '500',
+                }}
               />
               <TextInput
                 placeholder="Description (optional)"
                 placeholderTextColor={theme.textSecondary}
                 value={newExercise.description}
                 onChangeText={(text) => setNewExercise({ ...newExercise, description: text })}
-                style={{ backgroundColor: theme.background, color: theme.text, padding: 12, borderRadius: 8, marginBottom: 12, height: 80, textAlignVertical: 'top' }}
+                style={{ 
+                  backgroundColor: 'rgba(0,0,0,0.3)', 
+                  color: theme.text, 
+                  padding: 16, 
+                  borderRadius: 14, 
+                  marginBottom: 18, 
+                  height: 90, 
+                  textAlignVertical: 'top',
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  fontSize: 15,
+                  fontWeight: '400',
+                }}
                 multiline
               />
               <TouchableOpacity
                 onPress={pickVideo}
-                style={{ backgroundColor: theme.secondary, padding: 12, borderRadius: 8, marginBottom: 16 }}
+                activeOpacity={0.8}
+                style={{ 
+                  backgroundColor: theme.secondary, 
+                  padding: 16, 
+                  borderRadius: 14, 
+                  marginBottom: 14,
+                  opacity: 0.9,
+                }}
               >
-                <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>
-                  {newExercise.videoUri ? 'Change Video' : 'Add Video'}
+                <Text style={{ color: '#000', textAlign: 'center', fontWeight: '700', fontSize: 15 }}>
+                  {newExercise.videoUri ? '✓ Video Attached' : 'Add Video'}
                 </Text>
               </TouchableOpacity>
-              {newExercise.videoUri && (
-                <Text style={{ color: theme.primary, marginBottom: 16 }}>Video attached</Text>
-              )}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
                 <TouchableOpacity
                   onPress={() => setModalVisible(false)}
-                  style={{ flex: 1, padding: 12, marginRight: 8, borderRadius: 8, borderWidth: 1, borderColor: theme.border }}
+                  activeOpacity={0.7}
+                  style={{ flex: 1, padding: 16, marginRight: 8, borderRadius: 14, borderWidth: 1.5, borderColor: theme.border }}
                 >
-                  <Text style={{ color: theme.text, textAlign: 'center' }}>Cancel</Text>
+                  <Text style={{ color: theme.text, textAlign: 'center', fontWeight: '600', fontSize: 15 }}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleSaveExercise}
-                  style={{ flex: 1, padding: 12, marginLeft: 8, borderRadius: 8, backgroundColor: theme.primary }}
+                  activeOpacity={0.8}
+                  style={{ flex: 1, padding: 16, marginLeft: 8, borderRadius: 14, backgroundColor: theme.primary }}
                 >
-                  <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>Save</Text>
+                  <Text style={{ color: '#000', textAlign: 'center', fontWeight: '700', fontSize: 15 }}>Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -202,27 +308,78 @@ export default function CategoriesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View style={{ padding: 16, backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text, flex: 1 }}>Categories</Text>
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <Text style={{ fontSize: 24, color: theme.primary }}>+</Text>
+      <View style={{ padding: 18, paddingRight: 14, backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.border }}>
+        <TouchableOpacity 
+          onPress={() => navigation.openDrawer()}
+          activeOpacity={0.7}
+          style={{ padding: 6, marginRight: 6 }}
+        >
+          <Text style={{ fontSize: 22, color: theme.text }}>☰</Text>
+        </TouchableOpacity>
+        <Text style={{ fontSize: 24, fontWeight: '800', color: theme.text, flex: 1, letterSpacing: 0.5 }}>Categories</Text>
+        <TouchableOpacity 
+          onPress={() => setModalVisible(true)}
+          activeOpacity={0.7}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: theme.primary + '15',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 24, color: theme.primary, fontWeight: '700' }}>+</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={{ flex: 1, padding: 16 }}>
+      <ScrollView style={{ flex: 1, padding: 20 }} showsVerticalScrollIndicator={false}>
         {categories.map((category) => (
           <TouchableOpacity
             key={category.id}
-            style={{ backgroundColor: theme.card, borderRadius: 12, padding: 20, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: category.color }}
+            activeOpacity={0.75}
+            style={{ 
+              backgroundColor: theme.card, 
+              borderRadius: 20, 
+              padding: 20, 
+              marginBottom: 14, 
+              borderWidth: 1, 
+              borderColor: theme.border,
+              shadowColor: category.color,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 14,
+              elevation: 5,
+            }}
             onPress={() => setSelectedCategory(category)}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 28, marginRight: 12 }}>{category.icon}</Text>
-              <View>
-                <Text style={{ fontSize: 18, fontWeight: '600', color: theme.text }}>{category.name}</Text>
-                <Text style={{ color: theme.textSecondary }}>
+              <View style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: category.color + '15',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginRight: 16,
+              }}>
+                <Text style={{ fontSize: 28 }}>{category.icon}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 19, fontWeight: '700', color: theme.text, letterSpacing: 0.3 }}>{category.name}</Text>
+                <Text style={{ color: theme.textSecondary, marginTop: 4, fontSize: 13, fontWeight: '500' }}>
                   {exercises.filter((e) => e.categoryId === category.id).length} exercises
                 </Text>
+              </View>
+              <View style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: theme.border,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+                <Text style={{ fontSize: 16, color: theme.textSecondary, fontWeight: '600' }}>›</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -230,9 +387,20 @@ export default function CategoriesScreen() {
       </ScrollView>
 
       <Modal visible={isModalVisible} animationType="slide" transparent>
-        <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <View style={{ backgroundColor: theme.card, margin: 20, borderRadius: 16, padding: 20 }}>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text, marginBottom: 16 }}>
+        <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)', padding: 20 }}>
+          <View style={{ 
+            backgroundColor: theme.card, 
+            borderRadius: 24, 
+            padding: 24, 
+            borderWidth: 1, 
+            borderColor: theme.border,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.3,
+            shadowRadius: 20,
+            elevation: 10,
+          }}>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: theme.text, marginBottom: 24, letterSpacing: 0.5 }}>
               Add Category
             </Text>
             <TextInput
@@ -240,20 +408,32 @@ export default function CategoriesScreen() {
               placeholderTextColor={theme.textSecondary}
               value={newCategoryName}
               onChangeText={setNewCategoryName}
-              style={{ backgroundColor: theme.background, color: theme.text, padding: 12, borderRadius: 8, marginBottom: 16 }}
+              style={{ 
+                backgroundColor: 'rgba(0,0,0,0.3)', 
+                color: theme.text, 
+                padding: 16, 
+                borderRadius: 14, 
+                marginBottom: 24,
+                borderWidth: 1,
+                borderColor: theme.border,
+                fontSize: 16,
+                fontWeight: '500',
+              }}
             />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}
-                style={{ flex: 1, padding: 12, marginRight: 8, borderRadius: 8, borderWidth: 1, borderColor: theme.border }}
+                activeOpacity={0.7}
+                style={{ flex: 1, padding: 16, marginRight: 8, borderRadius: 14, borderWidth: 1.5, borderColor: theme.border }}
               >
-                <Text style={{ color: theme.text, textAlign: 'center' }}>Cancel</Text>
+                <Text style={{ color: theme.text, textAlign: 'center', fontWeight: '600', fontSize: 15 }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => { handleAddCategory(); setModalVisible(false); }}
-                style={{ flex: 1, padding: 12, marginLeft: 8, borderRadius: 8, backgroundColor: theme.primary }}
+                activeOpacity={0.8}
+                style={{ flex: 1, padding: 16, marginLeft: 8, borderRadius: 14, backgroundColor: theme.primary }}
               >
-                <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>Add</Text>
+                <Text style={{ color: '#000', textAlign: 'center', fontWeight: '700', fontSize: 15 }}>Add</Text>
               </TouchableOpacity>
             </View>
           </View>

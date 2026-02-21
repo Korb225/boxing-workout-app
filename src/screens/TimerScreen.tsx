@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Modal, Alert, StyleSheet } from 'react-native';
 import { Audio } from 'expo-av';
 import { useStore, useTheme } from '../store';
 import { Interval, AudioCue } from '../types';
@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 type TimerState = 'idle' | 'running' | 'paused';
 
-export default function TimerScreen() {
+export default function TimerScreen({ navigation }: { navigation: any }) {
   const theme = useTheme();
   const { timerConfig, setTimerConfig } = useStore();
   
@@ -32,13 +32,9 @@ export default function TimerScreen() {
     if (timerState === 'running' && timeRemaining > 0) {
       intervalRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            return 0;
-          }
-          
+          if (prev <= 1) return 0;
           const newTime = prev - 1;
           checkAudioCues(newTime);
-          
           return newTime;
         });
       }, 1000);
@@ -195,57 +191,127 @@ export default function TimerScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View style={{ padding: 16, backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text, flex: 1 }}>Boxing Timer</Text>
-        <TouchableOpacity onPress={() => setSetupModalVisible(true)}>
-          <Text style={{ fontSize: 16, color: theme.primary }}>Setup</Text>
+      <View style={{ padding: 18, paddingRight: 14, backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.border }}>
+        <TouchableOpacity 
+          onPress={() => navigation.openDrawer()}
+          activeOpacity={0.7}
+          style={{ padding: 6, marginRight: 6 }}
+        >
+          <Text style={{ fontSize: 22, color: theme.text }}>☰</Text>
+        </TouchableOpacity>
+        <Text style={{ fontSize: 24, fontWeight: '800', color: theme.text, flex: 1, letterSpacing: 0.5 }}>Boxing Timer</Text>
+        <TouchableOpacity 
+          onPress={() => setSetupModalVisible(true)}
+          activeOpacity={0.7}
+        >
+          <View style={{ 
+            paddingHorizontal: 16, 
+            paddingVertical: 8, 
+            backgroundColor: theme.primary + '15',
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: theme.primary + '30',
+          }}>
+            <Text style={{ fontSize: 14, color: theme.primary, fontWeight: '700' }}>Setup</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
         <View
           style={{
-            width: 280,
-            height: 280,
-            borderRadius: 140,
+            width: 260,
+            height: 260,
+            borderRadius: 130,
             backgroundColor: isWork ? theme.primary : theme.secondary,
             justifyContent: 'center',
             alignItems: 'center',
-            opacity: timerState === 'idle' ? 0.3 : 1,
+            opacity: timerState === 'idle' ? 0.25 : 1,
+            shadowColor: isWork ? theme.primary : theme.secondary,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.5,
+            shadowRadius: 40,
+            elevation: 15,
           }}
         >
-          <Text style={{ fontSize: 48, fontWeight: 'bold', color: '#fff' }}>
-            {formatTime(timeRemaining || setupConfig.workSeconds)}
-          </Text>
+          <View style={{ 
+            width: 220, 
+            height: 220, 
+            borderRadius: 110, 
+            backgroundColor: 'rgba(0,0,0,0.15)', 
+            justifyContent: 'center', 
+            alignItems: 'center' 
+          }}>
+            <Text style={{ fontSize: 58, fontWeight: '800', color: '#000', letterSpacing: 2 }}>
+              {formatTime(timeRemaining || setupConfig.workSeconds)}
+            </Text>
+          </View>
         </View>
 
         {timerState !== 'idle' && (
-          <>
-            <Text style={{ fontSize: 32, fontWeight: '600', color: theme.text, marginTop: 24 }}>
-              {currentInterval?.name || 'Round ' + currentRound}
-            </Text>
-            <Text style={{ fontSize: 18, color: theme.textSecondary, marginTop: 8 }}>
+          <View style={{ alignItems: 'center', marginTop: 28 }}>
+            <View style={{ 
+              paddingHorizontal: 20, 
+              paddingVertical: 8, 
+              backgroundColor: isWork ? theme.primary + '20' : theme.secondary + '20',
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: isWork ? theme.primary + '40' : theme.secondary + '40',
+              marginBottom: 10,
+            }}>
+              <Text style={{ 
+                fontSize: 22, 
+                fontWeight: '700', 
+                color: isWork ? theme.primary : theme.secondary,
+                letterSpacing: 1,
+              }}>
+                {currentInterval?.name || 'Round ' + currentRound}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 15, color: theme.textSecondary, fontWeight: '500' }}>
               Round {currentRound} of {setupConfig.rounds}
             </Text>
-          </>
+          </View>
         )}
 
-        <View style={{ flexDirection: 'row', marginTop: 40, gap: 16 }}>
+        <View style={{ flexDirection: 'row', marginTop: 44, gap: 14 }}>
           {timerState === 'idle' && (
             <TouchableOpacity
               onPress={startTimer}
-              style={{ backgroundColor: theme.primary, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 30 }}
+              activeOpacity={0.8}
+              style={{ 
+                backgroundColor: theme.primary, 
+                paddingHorizontal: 48, 
+                paddingVertical: 18, 
+                borderRadius: 30,
+                shadowColor: theme.primary,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.4,
+                shadowRadius: 16,
+                elevation: 8,
+              }}
             >
-              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600' }}>Start</Text>
+              <Text style={{ color: '#000', fontSize: 18, fontWeight: '800', letterSpacing: 1 }}>START</Text>
             </TouchableOpacity>
           )}
 
           {timerState === 'running' && (
             <TouchableOpacity
               onPress={pauseTimer}
-              style={{ backgroundColor: theme.secondary, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 30 }}
+              activeOpacity={0.8}
+              style={{ 
+                backgroundColor: theme.secondary, 
+                paddingHorizontal: 44, 
+                paddingVertical: 18, 
+                borderRadius: 30,
+                shadowColor: theme.secondary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 12,
+                elevation: 6,
+              }}
             >
-              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600' }}>Pause</Text>
+              <Text style={{ color: '#000', fontSize: 18, fontWeight: '700', letterSpacing: 1 }}>PAUSE</Text>
             </TouchableOpacity>
           )}
 
@@ -253,126 +319,194 @@ export default function TimerScreen() {
             <>
               <TouchableOpacity
                 onPress={resumeTimer}
-                style={{ backgroundColor: theme.primary, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 30 }}
+                activeOpacity={0.8}
+                style={{ 
+                  backgroundColor: theme.primary, 
+                  paddingHorizontal: 36, 
+                  paddingVertical: 18, 
+                  borderRadius: 30,
+                  shadowColor: theme.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.4,
+                  shadowRadius: 12,
+                  elevation: 6,
+                }}
               >
-                <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600' }}>Resume</Text>
+                <Text style={{ color: '#000', fontSize: 18, fontWeight: '700', letterSpacing: 1 }}>RESUME</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={stopTimer}
-                style={{ backgroundColor: theme.card, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 30, borderWidth: 1, borderColor: theme.border }}
+                activeOpacity={0.8}
+                style={{ 
+                  backgroundColor: theme.card, 
+                  paddingHorizontal: 32, 
+                  paddingVertical: 18, 
+                  borderRadius: 30, 
+                  borderWidth: 1.5, 
+                  borderColor: theme.border 
+                }}
               >
-                <Text style={{ color: theme.text, fontSize: 18, fontWeight: '600' }}>Stop</Text>
+                <Text style={{ color: theme.text, fontSize: 18, fontWeight: '600' }}>STOP</Text>
               </TouchableOpacity>
             </>
           )}
         </View>
 
         {timerState === 'idle' && (
-          <View style={{ marginTop: 40, alignItems: 'center' }}>
-            <Text style={{ color: theme.textSecondary }}>Rounds: {setupConfig.rounds}</Text>
-            <Text style={{ color: theme.textSecondary }}>Work: {formatTime(setupConfig.workSeconds)}</Text>
-            <Text style={{ color: theme.textSecondary }}>Rest: {formatTime(setupConfig.restSeconds)}</Text>
+          <View style={{ marginTop: 40, alignItems: 'center', backgroundColor: theme.card, padding: 20, borderRadius: 20, borderWidth: 1, borderColor: theme.border }}>
+            <Text style={{ color: theme.textSecondary, fontSize: 15, fontWeight: '600' }}>
+              {setupConfig.rounds} Rounds • {formatTime(setupConfig.workSeconds)} Work • {formatTime(setupConfig.restSeconds)} Rest
+            </Text>
           </View>
         )}
       </View>
 
       <Modal visible={isSetupModalVisible} animationType="slide">
         <View style={{ flex: 1, backgroundColor: theme.background }}>
-          <View style={{ padding: 16, backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => setSetupModalVisible(false)}>
-              <Text style={{ fontSize: 24, color: theme.text }}>←</Text>
+          <View style={{ padding: 18, backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.border }}>
+            <TouchableOpacity 
+              onPress={() => setSetupModalVisible(false)}
+              activeOpacity={0.7}
+              style={{ padding: 8 }}
+            >
+              <Text style={{ fontSize: 24, color: theme.primary }}>←</Text>
             </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text, marginLeft: 16, flex: 1 }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: theme.text, marginLeft: 12, flex: 1, letterSpacing: 0.5 }}>
               Timer Setup
             </Text>
-            <TouchableOpacity onPress={saveSetup}>
-              <Text style={{ fontSize: 16, color: theme.primary, fontWeight: '600' }}>Save</Text>
+            <TouchableOpacity 
+              onPress={saveSetup}
+              activeOpacity={0.7}
+            >
+              <Text style={{ fontSize: 16, color: theme.primary, fontWeight: '700' }}>Save</Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={{ flex: 1, padding: 16 }}>
-            <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 12 }}>Rounds</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <ScrollView style={{ flex: 1, padding: 20 }} showsVerticalScrollIndicator={false}>
+            <View style={{ marginBottom: 28 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSecondary, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Rounds</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                 <TouchableOpacity
                   onPress={() => setSetupConfig({ ...setupConfig, rounds: Math.max(1, setupConfig.rounds - 1) })}
-                  style={{ backgroundColor: theme.card, padding: 12, borderRadius: 8 }}
+                  activeOpacity={0.7}
+                  style={{ backgroundColor: theme.card, padding: 16, borderRadius: 14, borderWidth: 1, borderColor: theme.border }}
                 >
-                  <Text style={{ fontSize: 20, color: theme.text }}>-</Text>
+                  <Text style={{ fontSize: 22, color: theme.text, fontWeight: '600' }}>-</Text>
                 </TouchableOpacity>
-                <Text style={{ fontSize: 24, fontWeight: '600', color: theme.text, marginHorizontal: 24 }}>
+                <Text style={{ fontSize: 36, fontWeight: '800', color: theme.text, marginHorizontal: 48, letterSpacing: 2 }}>
                   {setupConfig.rounds}
                 </Text>
                 <TouchableOpacity
                   onPress={() => setSetupConfig({ ...setupConfig, rounds: setupConfig.rounds + 1 })}
-                  style={{ backgroundColor: theme.card, padding: 12, borderRadius: 8 }}
+                  activeOpacity={0.7}
+                  style={{ backgroundColor: theme.card, padding: 16, borderRadius: 14, borderWidth: 1, borderColor: theme.border }}
                 >
-                  <Text style={{ fontSize: 20, color: theme.text }}>+</Text>
+                  <Text style={{ fontSize: 22, color: theme.text, fontWeight: '600' }}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 12 }}>Work Time (seconds)</Text>
+            <View style={{ marginBottom: 28 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSecondary, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Work Time (seconds)</Text>
               <TextInput
                 value={String(setupConfig.workSeconds)}
                 onChangeText={(text) => setSetupConfig({ ...setupConfig, workSeconds: parseInt(text) || 0 })}
                 keyboardType="numeric"
-                style={{ backgroundColor: theme.card, color: theme.text, padding: 12, borderRadius: 8 }}
+                style={{ 
+                  backgroundColor: theme.card, 
+                  color: theme.text, 
+                  padding: 16, 
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  fontSize: 18,
+                  fontWeight: '600',
+                  textAlign: 'center',
+                }}
               />
             </View>
 
-            <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 12 }}>Rest Time (seconds)</Text>
+            <View style={{ marginBottom: 28 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSecondary, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Rest Time (seconds)</Text>
               <TextInput
                 value={String(setupConfig.restSeconds)}
                 onChangeText={(text) => setSetupConfig({ ...setupConfig, restSeconds: parseInt(text) || 0 })}
                 keyboardType="numeric"
-                style={{ backgroundColor: theme.card, color: theme.text, padding: 12, borderRadius: 8 }}
+                style={{ 
+                  backgroundColor: theme.card, 
+                  color: theme.text, 
+                  padding: 16, 
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  fontSize: 18,
+                  fontWeight: '600',
+                  textAlign: 'center',
+                }}
               />
             </View>
 
             <View style={{ marginBottom: 24 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>Audio Cues</Text>
-                <TouchableOpacity onPress={addAudioCue}>
-                  <Text style={{ color: theme.primary, fontSize: 16 }}>+ Add Cue</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>Audio Cues</Text>
+                <TouchableOpacity 
+                  onPress={addAudioCue}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ color: theme.primary, fontSize: 15, fontWeight: '700' }}>+ Add Cue</Text>
                 </TouchableOpacity>
               </View>
               
               {setupConfig.audioCues.map((cue) => (
-                <View key={cue.id} style={{ backgroundColor: theme.card, padding: 12, borderRadius: 8, marginBottom: 8 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                <View key={cue.id} style={{ backgroundColor: theme.card, padding: 16, borderRadius: 14, marginBottom: 12, borderWidth: 1, borderColor: theme.border }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
                     <TextInput
                       value={cue.name}
                       onChangeText={(text) => updateAudioCue(cue.id, { name: text })}
-                      style={{ color: theme.text, fontWeight: '600', flex: 1 }}
+                      style={{ color: theme.text, fontWeight: '600', flex: 1, fontSize: 16 }}
                     />
-                    <TouchableOpacity onPress={() => removeAudioCue(cue.id)}>
-                      <Text style={{ color: '#FF6B6B' }}>✕</Text>
+                    <TouchableOpacity 
+                      onPress={() => removeAudioCue(cue.id)}
+                      activeOpacity={0.7}
+                      style={{ padding: 4 }}
+                    >
+                      <Text style={{ color: '#FF6B6B', fontSize: 18 }}>✕</Text>
                     </TouchableOpacity>
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <Text style={{ color: theme.textSecondary }}>Trigger at (sec):</Text>
+                    <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Trigger at:</Text>
                     <TextInput
                       value={String(cue.triggerAt)}
                       onChangeText={(text) => updateAudioCue(cue.id, { triggerAt: parseInt(text) || 0 })}
                       keyboardType="numeric"
-                      style={{ backgroundColor: theme.background, color: theme.text, padding: 8, borderRadius: 4, width: 60 }}
+                      style={{ 
+                        backgroundColor: 'rgba(0,0,0,0.3)', 
+                        color: theme.text, 
+                        padding: 10, 
+                        borderRadius: 10, 
+                        width: 60,
+                        borderWidth: 1,
+                        borderColor: theme.border,
+                        textAlign: 'center',
+                        fontWeight: '600',
+                      }}
                     />
-                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <View style={{ flex: 1, flexDirection: 'row', gap: 8 }}>
                       {(['bell', 'beep', 'knock'] as const).map((type) => (
                         <TouchableOpacity
                           key={type}
                           onPress={() => updateAudioCue(cue.id, { soundType: type })}
+                          activeOpacity={0.7}
                           style={{
-                            backgroundColor: cue.soundType === type ? theme.primary : theme.background,
+                            backgroundColor: cue.soundType === type ? theme.primary : 'rgba(0,0,0,0.3)',
                             paddingHorizontal: 12,
-                            paddingVertical: 6,
-                            borderRadius: 4,
+                            paddingVertical: 10,
+                            borderRadius: 10,
+                            flex: 1,
+                            alignItems: 'center',
                           }}
                         >
-                          <Text style={{ color: cue.soundType === type ? '#fff' : theme.text, fontSize: 12 }}>
+                          <Text style={{ color: cue.soundType === type ? '#000' : theme.text, fontSize: 12, fontWeight: '700' }}>
                             {type.charAt(0).toUpperCase() + type.slice(1)}
                           </Text>
                         </TouchableOpacity>

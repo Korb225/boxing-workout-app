@@ -51,6 +51,7 @@ export interface ThemeColors {
   text: string;
   textSecondary: string;
   border: string;
+  primaryGlow: string;
 }
 
 export type ThemeMode = 'light' | 'dark' | 'custom';
