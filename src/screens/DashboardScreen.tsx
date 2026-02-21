@@ -103,11 +103,11 @@ export default function DashboardScreen({ navigation }: { navigation: any }) {
         </View>
         
         <MenuCard
-          title="Categories"
+          title="Exercises"
           icon="📁"
-          description="Browse workout categories"
+          description="Browse exercises by category"
           color={theme.primary}
-          onPress={() => navigation.navigate('Categories')}
+          onPress={() => navigation.navigate('Exercises')}
         />
         <MenuCard
           title="Workouts"

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Category, Exercise, Workout, TimerConfig, ThemeMode, ThemeColors } from '../types';
-import { defaultCategories, defaultExercises, defaultTimerConfig, lightTheme, darkTheme } from '../data/defaults';
+import { Category, Exercise, Workout, TimerConfig, ThemeMode, ThemeColors, Preset } from '../types';
+import { defaultCategories, defaultExercises, defaultTimerConfig, defaultPresets, lightTheme, darkTheme } from '../data/defaults';
 
 interface AppState {
   categories: Category[];
@@ -10,6 +10,7 @@ interface AppState {
   timerConfig: TimerConfig;
   themeMode: ThemeMode;
   customTheme: ThemeColors | null;
+  presets: Preset[];
   
   setCategories: (categories: Category[]) => void;
   addCategory: (category: Category) => void;
@@ -29,6 +30,11 @@ interface AppState {
   setTimerConfig: (config: TimerConfig) => void;
   setThemeMode: (mode: ThemeMode) => void;
   setCustomTheme: (theme: ThemeColors | null) => void;
+  // Presets CRUD
+  setPresets: (presets: Preset[]) => void;
+  addPreset: (preset: Preset) => void;
+  updatePreset: (id: string, updates: Partial<Preset>) => void;
+  deletePreset: (id: string) => void;
   
   loadData: () => Promise<void>;
   saveData: () => Promise<void>;
@@ -39,6 +45,7 @@ export const useStore = create<AppState>((set, get) => ({
   exercises: defaultExercises,
   workouts: [],
   timerConfig: defaultTimerConfig,
+  presets: defaultPresets,
   themeMode: 'dark',
   customTheme: null,
 
@@ -112,15 +119,30 @@ export const useStore = create<AppState>((set, get) => ({
     get().saveData();
   },
 
+  // Presets CRUD
+  setPresets: (presets) => { set({ presets }); get().saveData(); },
+  addPreset: (preset) => { set((state) => ({ presets: [...state.presets, preset] })); get().saveData(); },
+  updatePreset: (id, updates) => {
+    set((state) => ({
+      presets: state.presets.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }));
+    get().saveData();
+  },
+  deletePreset: (id) => {
+    set((state) => ({ presets: state.presets.filter((p) => p.id !== id) }));
+    get().saveData();
+  },
+
   loadData: async () => {
     try {
-      const [categories, exercises, workouts, timerConfig, themeMode, customTheme] = await Promise.all([
+      const [categories, exercises, workouts, timerConfig, themeMode, customTheme, presets] = await Promise.all([
         AsyncStorage.getItem('categories'),
         AsyncStorage.getItem('exercises'),
         AsyncStorage.getItem('workouts'),
         AsyncStorage.getItem('timerConfig'),
         AsyncStorage.getItem('themeMode'),
         AsyncStorage.getItem('customTheme'),
+        AsyncStorage.getItem('presets'),
       ]);
 
       set({
@@ -130,6 +152,7 @@ export const useStore = create<AppState>((set, get) => ({
         timerConfig: timerConfig ? JSON.parse(timerConfig) : defaultTimerConfig,
         themeMode: themeMode ? JSON.parse(themeMode) : 'dark',
         customTheme: customTheme ? JSON.parse(customTheme) : null,
+        presets: presets && JSON.parse(presets).length > 0 ? JSON.parse(presets) : defaultPresets,
       });
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -141,7 +164,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   saveData: async () => {
     try {
-      const { categories, exercises, workouts, timerConfig, themeMode, customTheme } = get();
+      const { categories, exercises, workouts, timerConfig, themeMode, customTheme, presets } = get();
       await Promise.all([
         AsyncStorage.setItem('categories', JSON.stringify(categories)),
         AsyncStorage.setItem('exercises', JSON.stringify(exercises)),
@@ -149,6 +172,7 @@ export const useStore = create<AppState>((set, get) => ({
         AsyncStorage.setItem('timerConfig', JSON.stringify(timerConfig)),
         AsyncStorage.setItem('themeMode', JSON.stringify(themeMode)),
         AsyncStorage.setItem('customTheme', JSON.stringify(customTheme)),
+        AsyncStorage.setItem('presets', JSON.stringify(presets)),
       ]);
     } catch (error) {
       console.error('Failed to save data:', error);

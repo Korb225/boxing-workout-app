@@ -2,15 +2,18 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { NavigationContainer, DrawerContentComponentProps } from '@react-navigation/native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '../store';
-import CategoriesScreen from '../screens/CategoriesScreen';
+import ExercisesScreen from '../screens/ExercisesScreen';
 import WorkoutsScreen from '../screens/WorkoutsScreen';
 import TimerScreen from '../screens/TimerScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import DashboardScreen from '../screens/DashboardScreen';
+import EditPresetScreen from '../screens/EditPresetScreen';
 
 const Drawer = createDrawerNavigator();
+const Stack = createNativeStackNavigator();
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const theme = useTheme();
@@ -18,7 +21,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
   const navItems = [
     { name: 'Dashboard', icon: '🏠', label: 'Dashboard' },
-    { name: 'Categories', icon: '📁', label: 'Categories' },
+    { name: 'Exercises', icon: '📁', label: 'Exercises' },
     { name: 'Workouts', icon: '🏋️', label: 'Workouts' },
     { name: 'Timer', icon: '⏱️', label: 'Timer' },
     { name: 'Profile', icon: '👤', label: 'Profile' },
@@ -61,6 +64,21 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
   );
 }
 
+function TimerStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="TimerMain" component={TimerScreen} />
+      <Stack.Screen 
+        name="EditPreset" 
+        component={EditPresetScreen}
+        options={{
+          presentation: 'modal',
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function AppNavigator() {
   return (
     <NavigationContainer>
@@ -79,9 +97,9 @@ export default function AppNavigator() {
         }}
       >
         <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-        <Drawer.Screen name="Categories" component={CategoriesScreen} />
+        <Drawer.Screen name="Exercises" component={ExercisesScreen} />
         <Drawer.Screen name="Workouts" component={WorkoutsScreen} />
-        <Drawer.Screen name="Timer" component={TimerScreen} />
+        <Drawer.Screen name="Timer" component={TimerStack} />
         <Drawer.Screen name="Profile" component={ProfileScreen} />
         <Drawer.Screen name="Settings" component={SettingsScreen} />
       </Drawer.Navigator>

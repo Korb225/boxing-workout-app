@@ -23,7 +23,7 @@ const SectionHeader = ({ title }: { title: string }) => {
   );
 };
 
-export default function CategoriesScreen({ navigation }: { navigation: any }) {
+export default function ExercisesScreen({ navigation }: { navigation: any }) {
   const theme = useTheme();
   const { categories, exercises, addExercise, updateExercise, deleteExercise, addCategory } = useStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -316,7 +316,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
         >
           <Text style={{ fontSize: 22, color: theme.text }}>☰</Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 24, fontWeight: '800', color: theme.text, flex: 1, letterSpacing: 0.5 }}>Categories</Text>
+        <Text style={{ fontSize: 24, fontWeight: '800', color: theme.text, flex: 1, letterSpacing: 0.5 }}>Exercises</Text>
         <TouchableOpacity 
           onPress={() => setModalVisible(true)}
           activeOpacity={0.7}
