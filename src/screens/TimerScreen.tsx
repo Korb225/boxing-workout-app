@@ -124,6 +124,8 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
 
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [runningCycles, setRunningCycles] = useState<Cycle[]>([]);
+  const [roundIncrementIndices, setRoundIncrementIndices] = useState<number[]>([]);
+  const [totalRounds, setTotalRounds] = useState<number>(0);
 
   const [presetOptionsVisible, setPresetOptionsVisible] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<Preset | null>(null);
@@ -136,37 +138,46 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
 
   const totalQuickstartDuration = quickstart.rounds * (quickstart.workSeconds + quickstart.restSeconds) + quickstart.prepareSeconds;
 
-  const buildQuickstartCycles = (): Cycle[] => {
+  const handleQuickstartStart = () => {
     const cycles: Cycle[] = [];
+    const roundIncIndices: number[] = [];
     
     if (quickstart.prepareSeconds > 0) {
       cycles.push({ id: uuidv4(), name: 'PREPARE', duration: quickstart.prepareSeconds, color: '#FF8F00' });
     }
     
     for (let i = 0; i < quickstart.rounds; i++) {
+      const workIndex = cycles.length;
       cycles.push({ id: uuidv4(), name: 'WORK', duration: quickstart.workSeconds, color: '#43A047' });
+      roundIncIndices.push(workIndex);
+      
       if (i < quickstart.rounds - 1 || quickstart.restSeconds > 0) {
         cycles.push({ id: uuidv4(), name: 'REST', duration: quickstart.restSeconds, color: '#00897B' });
       }
     }
     
-    return cycles;
-  };
-
-  const handleQuickstartStart = () => {
-    const cycles = buildQuickstartCycles();
     setRunningCycles(cycles);
+    setRoundIncrementIndices(roundIncIndices);
+    setTotalRounds(quickstart.rounds);
     setIsTimerRunning(true);
   };
 
   const handlePresetStart = (preset: Preset) => {
     const cycles: Cycle[] = [];
+    const roundIncIndices: number[] = [];
+    let totalPresetRounds = 0;
     
     if (preset.sets && preset.sets.length > 0) {
+      totalPresetRounds = preset.sets.reduce((sum, set) => sum + set.repeat, 0);
+      
       preset.sets.forEach(set => {
-        for (let i = 0; i < set.repeat; i++) {
-          set.cycles.forEach(cycle => {
+        for (let repeat = 0; repeat < set.repeat; repeat++) {
+          const roundBoundaryIndex = cycles.length;
+          set.cycles.forEach((cycle, cycleIdx) => {
             cycles.push({ ...cycle, id: uuidv4() });
+            if (cycleIdx === set.cycles.length - 1) {
+              roundIncIndices.push(cycles.length - 1);
+            }
           });
         }
       });
@@ -177,12 +188,16 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
     }
     
     setRunningCycles(cycles);
+    setRoundIncrementIndices(roundIncIndices);
+    setTotalRounds(totalPresetRounds);
     setIsTimerRunning(true);
   };
 
   const handleTimerExit = () => {
     setIsTimerRunning(false);
     setRunningCycles([]);
+    setRoundIncrementIndices([]);
+    setTotalRounds(0);
   };
 
   const openPresetOptions = (preset: Preset, e: any) => {
@@ -223,7 +238,7 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
   };
 
   if (isTimerRunning) {
-    return <TimerRunScreen cycles={runningCycles} onExit={handleTimerExit} />;
+    return <TimerRunScreen cycles={runningCycles} onExit={handleTimerExit} roundIncrementIndices={roundIncrementIndices} totalRounds={totalRounds} />;
   }
 
   return (
@@ -252,11 +267,11 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
               <View style={{ marginBottom: 16 }}>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: theme.textSecondary, marginBottom: 8, textTransform: 'uppercase', textAlign: 'center' }}>Rounds</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                  <TouchableOpacity onPress={() => setQuickstart({ ...quickstart, rounds: Math.max(1, quickstart.rounds - 5) })} style={{ backgroundColor: theme.background, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}>
+                  <TouchableOpacity onPress={() => setQuickstart({ ...quickstart, rounds: Math.max(1, quickstart.rounds - 1) })} style={{ backgroundColor: theme.background, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}>
                     <Text style={{ fontSize: 20, color: theme.text }}>-</Text>
                   </TouchableOpacity>
                   <Text style={{ fontSize: 28, fontWeight: '700', color: theme.text, marginHorizontal: 32, minWidth: 60, textAlign: 'center' }}>{quickstart.rounds}</Text>
-                  <TouchableOpacity onPress={() => setQuickstart({ ...quickstart, rounds: quickstart.rounds + 5 })} style={{ backgroundColor: theme.background, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}>
+                  <TouchableOpacity onPress={() => setQuickstart({ ...quickstart, rounds: quickstart.rounds + 1 })} style={{ backgroundColor: theme.background, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.border }}>
                     <Text style={{ fontSize: 20, color: theme.text }}>+</Text>
                   </TouchableOpacity>
                 </View>
@@ -352,14 +367,10 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
           <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}>
             <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text, marginBottom: 20, textAlign: 'center' }}>{selectedPreset?.name}</Text>
             
-            <TouchableOpacity onPress={editPreset} style={{ backgroundColor: theme.primary, padding: 16, borderRadius: 14, marginBottom: 12 }}>
+            <TouchableOpacity onPress={editPreset} style={{ backgroundColor: theme.primary, padding: 16, borderRadius: 14 }}>
               <Text style={{ color: '#000000', fontSize: 16, fontWeight: '700', textAlign: 'center' }}>Edit</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity onPress={deletePresetConfirm} style={{ backgroundColor: '#FF6B6B', padding: 16, borderRadius: 14 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700', textAlign: 'center' }}>Delete</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity onPress={() => setPresetOptionsVisible(false)} style={{ padding: 16, marginTop: 12 }}>
               <Text style={{ color: theme.textSecondary, fontSize: 14, textAlign: 'center' }}>Cancel</Text>
             </TouchableOpacity>

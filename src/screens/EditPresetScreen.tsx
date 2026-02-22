@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, StyleSheet, Dimensions, Modal } from 'react-native';
 import { useStore, useTheme } from '../store';
 import { Preset, WorkoutSet, Cycle, COLOR_PALETTE, TimerColor } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,51 +16,112 @@ interface EditPresetScreenProps {
 }
 
 function TimeInput({ value, onChange, label }: { value: number; onChange: (seconds: number) => void; label: string }) {
+  const theme = useTheme();
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const mins = Math.floor(value / 60);
+  const secs = value % 60;
+  
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sc = s % 60;
     return `${m.toString().padStart(2, '0')}:${sc.toString().padStart(2, '0')}`;
   };
 
+  const numbers = Array.from({ length: 60 }, (_, i) => i);
+  
+  const handleMinsChange = (newMins: number) => {
+    onChange(newMins * 60 + secs);
+  };
+  
+  const handleSecsChange = (newSecs: number) => {
+    onChange(mins * 60 + newSecs);
+  };
+
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', width: 50 }}>{label}</Text>
-      <TextInput
-        value={formatTime(value)}
-        onChangeText={(text) => {
-          const parts = text.split(':');
-          if (parts.length === 2) {
-            const m = parseInt(parts[0]) || 0;
-            const s = parseInt(parts[1]) || 0;
-            onChange(m * 60 + s);
-          }
-        }}
-        keyboardType="numbers-and-punctuation"
+      <TouchableOpacity 
+        onPress={() => setPickerVisible(true)}
         style={{
-          backgroundColor: 'rgba(0,0,0,0.2)',
-          color: '#FFFFFF',
-          paddingHorizontal: 8,
-          paddingVertical: 6,
-          borderRadius: 6,
-          fontSize: 14,
-          fontWeight: '600',
-          minWidth: 60,
-          textAlign: 'center',
+          backgroundColor: 'rgba(0,0,0,0.3)',
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderRadius: 8,
         }}
-      />
+      >
+        <Text style={{ fontSize: 20, fontWeight: '700', color: '#FFFFFF', textAlign: 'center' }}>{formatTime(value)}</Text>
+      </TouchableOpacity>
+      
+      <Modal visible={pickerVisible} animationType="slide" transparent>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} activeOpacity={1} onPress={() => setPickerVisible(false)}>
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: theme.text, textAlign: 'center', marginBottom: 20 }}>{label || 'Set Time'}</Text>
+            
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20 }}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>MIN</Text>
+                <ScrollView style={{ height: 150 }} showsVerticalScrollIndicator={false}>
+                  <View style={{ height: 30 }} />
+                  {numbers.map((n) => (
+                    <TouchableOpacity 
+                      key={n} 
+                      onPress={() => handleMinsChange(n)}
+                      style={{ height: 30, justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      <Text style={{ fontSize: 24, fontWeight: n === mins ? '700' : '400', color: n === mins ? theme.primary : theme.textSecondary }}>
+                        {n.toString().padStart(2, '0')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <View style={{ height: 30 }} />
+                </ScrollView>
+              </View>
+              
+              <Text style={{ fontSize: 32, fontWeight: '300', color: theme.text }}>:</Text>
+              
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>SEC</Text>
+                <ScrollView style={{ height: 150 }} showsVerticalScrollIndicator={false}>
+                  <View style={{ height: 30 }} />
+                  {numbers.map((n) => (
+                    <TouchableOpacity 
+                      key={n} 
+                      onPress={() => handleSecsChange(n)}
+                      style={{ height: 30, justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      <Text style={{ fontSize: 24, fontWeight: n === secs ? '700' : '400', color: n === secs ? theme.primary : theme.textSecondary }}>
+                        {n.toString().padStart(2, '0')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <View style={{ height: 30 }} />
+                </ScrollView>
+              </View>
+            </View>
+            
+            <TouchableOpacity 
+              onPress={() => setPickerVisible(false)}
+              style={{ backgroundColor: theme.primary, padding: 14, borderRadius: 12, marginTop: 20 }}
+            >
+              <Text style={{ color: '#000000', fontSize: 16, fontWeight: '700', textAlign: 'center' }}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
 
 function CycleEditor({ cycle, onUpdate, onDelete }: { cycle: Cycle; onUpdate: (updates: Partial<Cycle>) => void; onDelete: () => void }) {
+  const [colorPickerVisible, setColorPickerVisible] = useState(false);
+  
   return (
-    <View style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: 12, marginBottom: 8 }}>
+    <View style={{ backgroundColor: cycle.color, borderRadius: 12, padding: 12, marginBottom: 8 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <TextInput
           value={cycle.name}
           onChangeText={(text) => onUpdate({ name: text })}
           placeholder="Cycle name"
-          placeholderTextColor="rgba(255,255,255,0.5)"
+          placeholderTextColor="rgba(255,255,255,0.7)"
           style={{
             color: '#FFFFFF',
             fontSize: 16,
@@ -70,28 +131,35 @@ function CycleEditor({ cycle, onUpdate, onDelete }: { cycle: Cycle; onUpdate: (u
           }}
         />
         <TouchableOpacity onPress={onDelete} style={{ padding: 4 }}>
-          <Text style={{ color: '#FF6B6B', fontSize: 16, fontWeight: '600' }}>✕</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, fontWeight: '600' }}>✕</Text>
         </TouchableOpacity>
       </View>
       
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 8 }}>
+      <View style={{ alignItems: 'center', marginBottom: 8 }}>
         <TimeInput 
-          label="" 
+          label="Duration"
           value={cycle.duration} 
           onChange={(v) => onUpdate({ duration: v })} 
         />
       </View>
       
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {COLOR_PALETTE.map((color) => (
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <TouchableOpacity 
+          onPress={() => setColorPickerVisible(true)}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+        >
+          <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 18 }}>🎨</Text>
+        </TouchableOpacity>
+        
+        <View style={{ flexDirection: 'row', gap: 4 }}>
+          {COLOR_PALETTE.slice(0, 6).map((color) => (
             <TouchableOpacity
               key={color}
               onPress={() => onUpdate({ color })}
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: 14,
+                width: 20,
+                height: 20,
+                borderRadius: 10,
                 backgroundColor: color,
                 borderWidth: cycle.color === color ? 2 : 0,
                 borderColor: '#FFFFFF',
@@ -99,12 +167,44 @@ function CycleEditor({ cycle, onUpdate, onDelete }: { cycle: Cycle; onUpdate: (u
             />
           ))}
         </View>
-      </ScrollView>
+      </View>
+      
+      <Modal visible={colorPickerVisible} animationType="slide" transparent>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} activeOpacity={1} onPress={() => setColorPickerVisible(false)}>
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#2A2A2A', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#FFFFFF', marginBottom: 20, textAlign: 'center' }}>Choose Color</Text>
+            
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
+              {COLOR_PALETTE.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  onPress={() => {
+                    onUpdate({ color });
+                    setColorPickerVisible(false);
+                  }}
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: color,
+                    borderWidth: cycle.color === color ? 3 : 0,
+                    borderColor: '#FFFFFF',
+                  }}
+                />
+              ))}
+            </View>
+            
+            <TouchableOpacity onPress={() => setColorPickerVisible(false)} style={{ padding: 16, marginTop: 12 }}>
+              <Text style={{ color: '#AAAAAA', fontSize: 14, textAlign: 'center' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
 
-function SetEditor({ set, setIndex, onUpdate, onDelete }: { set: WorkoutSet; setIndex: number; onUpdate: (updates: Partial<WorkoutSet>) => void; onDelete: () => void }) {
+function SetEditor({ set, setIndex, onUpdate }: { set: WorkoutSet; setIndex: number; onUpdate: (updates: Partial<WorkoutSet>) => void }) {
   const theme = useTheme();
   
   const setDuration = set.cycles.reduce((sum, c) => sum + c.duration, 0);
@@ -146,12 +246,7 @@ function SetEditor({ set, setIndex, onUpdate, onDelete }: { set: WorkoutSet; set
       {/* Set Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 14, fontWeight: '700', color: '#FFFFFF' }}>Set {setIndex + 1}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{formatTime(setDuration)}</Text>
-          <TouchableOpacity onPress={onDelete}>
-            <Text style={{ color: '#FF6B6B', fontWeight: '600' }}>Delete</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{formatTime(setDuration)}</Text>
       </View>
 
       {/* Cycles */}
@@ -207,7 +302,43 @@ export default function EditPresetScreen({ navigation, route }: EditPresetScreen
   const isEditing = !!existingPreset;
 
   const [presetName, setPresetName] = useState(existingPreset?.name || '');
-  const [sets, setSets] = useState<WorkoutSet[]>(existingPreset?.sets || []);
+  const [sets, setSets] = useState<WorkoutSet[]>(() => {
+    if (existingPreset?.sets && existingPreset.sets.length > 0) {
+      return existingPreset.sets;
+    }
+    return [
+      {
+        id: uuidv4(),
+        repeat: 1,
+        cycles: [
+          {
+            id: uuidv4(),
+            name: 'PREPARE',
+            duration: 5,
+            color: '#FF8F00',
+          },
+        ],
+      },
+      {
+        id: uuidv4(),
+        repeat: 1,
+        cycles: [
+          {
+            id: uuidv4(),
+            name: 'WORK',
+            duration: 60,
+            color: '#43A047',
+          },
+          {
+            id: uuidv4(),
+            name: 'REST',
+            duration: 30,
+            color: '#00897B',
+          },
+        ],
+      },
+    ];
+  });
 
   const getTotalDuration = (): number => {
     let total = 0;
@@ -343,47 +474,33 @@ export default function EditPresetScreen({ navigation, route }: EditPresetScreen
 
         {/* Sets */}
         <View style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSecondary, textTransform: 'uppercase' }}>Sets</Text>
-            <TouchableOpacity onPress={addSet}>
-              <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 14 }}>+ Add Set</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSecondary, textTransform: 'uppercase', marginBottom: 12 }}>Sets</Text>
 
-          {sets.length === 0 ? (
-            <View style={{ backgroundColor: theme.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: theme.border, alignItems: 'center' }}>
-              <Text style={{ color: theme.textSecondary }}>No sets yet</Text>
-              <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 4 }}>Tap + Add Set to create one</Text>
-            </View>
-          ) : (
-            sets.map((set, index) => (
-              <SetEditor
-                key={set.id}
-                set={set}
-                setIndex={index}
-                onUpdate={(updates) => updateSet(set.id, updates)}
-                onDelete={() => deleteSet(set.id)}
-              />
-            ))
-          )}
-        </View>
+          {sets.map((set, index) => (
+            <SetEditor
+              key={set.id}
+              set={set}
+              setIndex={index}
+              onUpdate={(updates) => updateSet(set.id, updates)}
+            />
+          ))}
 
-        {/* Delete Button */}
-        {isEditing && (
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={{
-              backgroundColor: theme.card,
-              padding: 16,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: '#FF6B6B',
-              marginTop: 20,
+          {/* Add Set Button */}
+          <TouchableOpacity 
+            onPress={addSet}
+            style={{ 
+              borderWidth: 1, 
+              borderColor: 'rgba(255,255,255,0.2)', 
+              borderRadius: 16, 
+              padding: 24,
+              alignItems: 'center',
+              borderStyle: 'dashed',
+              marginTop: 8
             }}
           >
-            <Text style={{ color: '#FF6B6B', textAlign: 'center', fontWeight: '600' }}>Delete Preset</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.6)', fontWeight: '600', fontSize: 16 }}>+</Text>
           </TouchableOpacity>
-        )}
+        </View>
       </ScrollView>
     </View>
   );

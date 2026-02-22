@@ -91,5 +91,6 @@ export interface Preset {
   id: string;
   name: string;
   sets: WorkoutSet[];
+  cycles?: Cycle[]; // Legacy format support
   createdAt?: number;
 }

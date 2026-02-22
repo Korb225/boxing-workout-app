@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Pressable, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Pressable, Platform, Animated } from 'react-native';
 import { useTheme } from '../store';
 import { Cycle } from '../types';
 
@@ -13,19 +13,22 @@ type TimerState = 'idle' | 'running' | 'paused';
 interface TimerRunScreenProps {
   cycles: Cycle[];
   onExit: () => void;
+  roundIncrementIndices?: number[];
+  totalRounds?: number;
 }
 
-export default function TimerRunScreen({ cycles, onExit }: TimerRunScreenProps) {
+export default function TimerRunScreen({ cycles, onExit, roundIncrementIndices = [], totalRounds }: TimerRunScreenProps) {
   const theme = useTheme();
   const [timerState, setTimerState] = useState<TimerState>('running');
   const [currentCycleIndex, setCurrentCycleIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(cycles[0]?.duration || 0);
+  const [currentRound, setCurrentRound] = useState(1);
   const [isHolding, setIsHolding] = useState(false);
-  const [holdProgress, setHoldProgress] = useState(0);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const holdProgressAnim = useRef(new Animated.Value(0)).current;
 
   const currentCycle = cycles[currentCycleIndex];
   const totalCycles = cycles.length;
@@ -77,6 +80,11 @@ export default function TimerRunScreen({ cycles, onExit }: TimerRunScreenProps) 
       playSound();
       return;
     }
+    
+    if (roundIncrementIndices.includes(nextIndex)) {
+      setCurrentRound(prev => prev + 1);
+    }
+    
     setCurrentCycleIndex(nextIndex);
     setTimeRemaining(cycles[nextIndex].duration);
   };
@@ -109,23 +117,22 @@ export default function TimerRunScreen({ cycles, onExit }: TimerRunScreenProps) 
 
   const handleHoldStart = () => {
     setIsHolding(true);
-    setHoldProgress(0);
-    holdTimerRef.current = setInterval(() => {
-      setHoldProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(holdTimerRef.current!);
-          onExit();
-          return 100;
-        }
-        return prev + 20;
-      });
-    }, 100);
+    holdProgressAnim.setValue(0);
+    Animated.timing(holdProgressAnim, {
+      toValue: 100,
+      duration: 500,
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished) {
+        onExit();
+      }
+    });
   };
 
   const handleHoldEnd = () => {
     setIsHolding(false);
-    setHoldProgress(0);
-    if (holdTimerRef.current) clearInterval(holdTimerRef.current);
+    holdProgressAnim.stopAnimation();
+    holdProgressAnim.setValue(0);
   };
 
   if (!currentCycle) {
@@ -150,7 +157,16 @@ export default function TimerRunScreen({ cycles, onExit }: TimerRunScreenProps) 
         <View style={[styles.holdButton, { borderColor: 'rgba(255,255,255,0.3)' }]}>
           <Text style={styles.holdText}>Hold to exit</Text>
           {isHolding && (
-            <View style={[styles.holdProgress, { width: `${holdProgress}%` }]} />
+            <Animated.View 
+              style={[
+                styles.holdProgress, 
+                { width: holdProgressAnim.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: ['0%', '100%']
+                  }) 
+                }
+              ]} 
+            />
           )}
         </View>
       </Pressable>
@@ -163,7 +179,11 @@ export default function TimerRunScreen({ cycles, onExit }: TimerRunScreenProps) 
 
       {/* Progress */}
       <Text style={styles.progress}>
-        {currentCycleIndex + 1} / {totalCycles}
+        {totalRounds ? (
+          `${currentRound} / ${totalRounds}`
+        ) : (
+          `${currentCycleIndex + 1} / ${totalCycles}`
+        )}
       </Text>
 
       {/* Controls */}
