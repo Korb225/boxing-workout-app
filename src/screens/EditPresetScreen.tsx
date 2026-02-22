@@ -143,30 +143,13 @@ function CycleEditor({ cycle, onUpdate, onDelete }: { cycle: Cycle; onUpdate: (u
         />
       </View>
       
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
         <TouchableOpacity 
           onPress={() => setColorPickerVisible(true)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
         >
-          <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 18 }}>🎨</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16 }}>🎨</Text>
         </TouchableOpacity>
-        
-        <View style={{ flexDirection: 'row', gap: 4 }}>
-          {COLOR_PALETTE.slice(0, 6).map((color) => (
-            <TouchableOpacity
-              key={color}
-              onPress={() => onUpdate({ color })}
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 10,
-                backgroundColor: color,
-                borderWidth: cycle.color === color ? 2 : 0,
-                borderColor: '#FFFFFF',
-              }}
-            />
-          ))}
-        </View>
       </View>
       
       <Modal visible={colorPickerVisible} animationType="slide" transparent>
@@ -204,7 +187,7 @@ function CycleEditor({ cycle, onUpdate, onDelete }: { cycle: Cycle; onUpdate: (u
   );
 }
 
-function SetEditor({ set, setIndex, onUpdate }: { set: WorkoutSet; setIndex: number; onUpdate: (updates: Partial<WorkoutSet>) => void }) {
+function SetEditor({ set, setIndex, onUpdate, onDelete }: { set: WorkoutSet; setIndex: number; onUpdate: (updates: Partial<WorkoutSet>) => void; onDelete: () => void }) {
   const theme = useTheme();
   
   const setDuration = set.cycles.reduce((sum, c) => sum + c.duration, 0);
@@ -246,7 +229,12 @@ function SetEditor({ set, setIndex, onUpdate }: { set: WorkoutSet; setIndex: num
       {/* Set Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 14, fontWeight: '700', color: '#FFFFFF' }}>Set {setIndex + 1}</Text>
-        <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{formatTime(setDuration)}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{formatTime(setDuration)}</Text>
+          <TouchableOpacity onPress={onDelete}>
+            <Text style={{ fontSize: 12, color: '#888888', fontWeight: '600' }}>DEL</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Cycles */}
@@ -380,12 +368,7 @@ export default function EditPresetScreen({ navigation, route }: EditPresetScreen
       Alert.alert('Cannot Delete', 'A preset must have at least one set');
       return;
     }
-    Alert.alert('Delete Set', 'Are you sure you want to delete this set?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => {
-        setSets(sets.filter(s => s.id !== setId));
-      }},
-    ]);
+    setSets(sets.filter(s => s.id !== setId));
   };
 
   const handleSave = () => {
@@ -418,14 +401,8 @@ export default function EditPresetScreen({ navigation, route }: EditPresetScreen
 
   const handleDelete = () => {
     if (!existingPreset) return;
-    
-    Alert.alert('Delete Preset', `Are you sure you want to delete "${existingPreset.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => {
-        deletePreset(existingPreset.id);
-        navigation.goBack();
-      }},
-    ]);
+    deletePreset(existingPreset.id);
+    navigation.goBack();
   };
 
   return (
@@ -438,6 +415,11 @@ export default function EditPresetScreen({ navigation, route }: EditPresetScreen
         <Text style={{ fontSize: 20, fontWeight: '700', color: theme.text, marginLeft: 12, flex: 1 }}>
           {isEditing ? 'Edit Preset' : 'New Preset'}
         </Text>
+        {isEditing && (
+          <TouchableOpacity onPress={handleDelete} style={{ marginRight: 12 }}>
+            <Text style={{ fontSize: 14, color: '#888888', fontWeight: '600' }}>DEL</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={handleSave}>
           <Text style={{ fontSize: 16, color: theme.primary, fontWeight: '700' }}>Save</Text>
         </TouchableOpacity>
@@ -482,6 +464,7 @@ export default function EditPresetScreen({ navigation, route }: EditPresetScreen
               set={set}
               setIndex={index}
               onUpdate={(updates) => updateSet(set.id, updates)}
+              onDelete={() => deleteSet(set.id)}
             />
           ))}
 

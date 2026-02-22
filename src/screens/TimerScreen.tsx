@@ -126,6 +126,8 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
   const [runningCycles, setRunningCycles] = useState<Cycle[]>([]);
   const [roundIncrementIndices, setRoundIncrementIndices] = useState<number[]>([]);
   const [totalRounds, setTotalRounds] = useState<number>(0);
+  const [setRepeatCounts, setSetRepeatCounts] = useState<number[]>([]);
+  const [setBoundaries, setSetBoundaries] = useState<number[]>([]);
 
   const [presetOptionsVisible, setPresetOptionsVisible] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<Preset | null>(null);
@@ -158,29 +160,32 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
     
     setRunningCycles(cycles);
     setRoundIncrementIndices(roundIncIndices);
-    setTotalRounds(quickstart.rounds);
+    setTotalRounds(0);
     setIsTimerRunning(true);
   };
 
   const handlePresetStart = (preset: Preset) => {
     const cycles: Cycle[] = [];
     const roundIncIndices: number[] = [];
+    const repeatCounts: number[] = [];
+    const boundaries: number[] = [];
     let totalPresetRounds = 0;
     
     if (preset.sets && preset.sets.length > 0) {
-      totalPresetRounds = preset.sets.reduce((sum, set) => sum + set.repeat, 0);
-      
-      preset.sets.forEach(set => {
+      preset.sets.forEach((set, setIdx) => {
+        repeatCounts.push(set.repeat);
+        boundaries.push(cycles.length);
+        
         for (let repeat = 0; repeat < set.repeat; repeat++) {
-          const roundBoundaryIndex = cycles.length;
           set.cycles.forEach((cycle, cycleIdx) => {
             cycles.push({ ...cycle, id: uuidv4() });
-            if (cycleIdx === set.cycles.length - 1) {
+            if (repeat > 0 && cycleIdx === 0) {
               roundIncIndices.push(cycles.length - 1);
             }
           });
         }
       });
+      totalPresetRounds = preset.sets.reduce((sum, set) => sum + set.repeat, 0);
     } else if (preset.cycles && preset.cycles.length > 0) {
       preset.cycles.forEach(cycle => {
         cycles.push({ ...cycle, id: uuidv4() });
@@ -190,6 +195,8 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
     setRunningCycles(cycles);
     setRoundIncrementIndices(roundIncIndices);
     setTotalRounds(totalPresetRounds);
+    setSetRepeatCounts(repeatCounts);
+    setSetBoundaries(boundaries);
     setIsTimerRunning(true);
   };
 
@@ -198,6 +205,8 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
     setRunningCycles([]);
     setRoundIncrementIndices([]);
     setTotalRounds(0);
+    setSetRepeatCounts([]);
+    setSetBoundaries([]);
   };
 
   const openPresetOptions = (preset: Preset, e: any) => {
@@ -238,7 +247,7 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
   };
 
   if (isTimerRunning) {
-    return <TimerRunScreen cycles={runningCycles} onExit={handleTimerExit} roundIncrementIndices={roundIncrementIndices} totalRounds={totalRounds} />;
+    return <TimerRunScreen cycles={runningCycles} onExit={handleTimerExit} roundIncrementIndices={roundIncrementIndices} totalRounds={totalRounds} setRepeatCounts={setRepeatCounts} setBoundaries={setBoundaries} />;
   }
 
   return (
@@ -310,7 +319,7 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
                 const presetCycles = preset.cycles || [];
                 
                 return (
-                  <TouchableOpacity key={preset.id} style={{ backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.border, overflow: 'hidden' }} onPress={() => handlePresetStart(preset)} activeOpacity={0.8}>
+                  <View key={preset.id} style={{ backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.border, overflow: 'hidden' }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, backgroundColor: theme.card }}>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 16, fontWeight: '700', color: theme.text }}>{preset.name}</Text>
@@ -354,7 +363,7 @@ export default function TimerScreen({ navigation }: { navigation: any }) {
                         </TouchableOpacity>
                       </View>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 );
               })}
             </View>

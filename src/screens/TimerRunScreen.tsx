@@ -15,9 +15,11 @@ interface TimerRunScreenProps {
   onExit: () => void;
   roundIncrementIndices?: number[];
   totalRounds?: number;
+  setRepeatCounts?: number[];
+  setBoundaries?: number[];
 }
 
-export default function TimerRunScreen({ cycles, onExit, roundIncrementIndices = [], totalRounds }: TimerRunScreenProps) {
+export default function TimerRunScreen({ cycles, onExit, roundIncrementIndices = [], totalRounds, setRepeatCounts = [], setBoundaries = [] }: TimerRunScreenProps) {
   const theme = useTheme();
   const [timerState, setTimerState] = useState<TimerState>('running');
   const [currentCycleIndex, setCurrentCycleIndex] = useState(0);
@@ -33,6 +35,28 @@ export default function TimerRunScreen({ cycles, onExit, roundIncrementIndices =
   const currentCycle = cycles[currentCycleIndex];
   const totalCycles = cycles.length;
   const progress = totalCycles > 1 ? (currentCycleIndex + 1) / totalCycles : 1;
+
+  const getSetIndex = (cycleIndex: number): number => {
+    if (setBoundaries.length === 0) return 0;
+    for (let i = setBoundaries.length - 1; i >= 0; i--) {
+      if (cycleIndex >= setBoundaries[i]) return i;
+    }
+    return 0;
+  };
+
+  const getDisplayRound = (): number => {
+    if (setBoundaries.length === 0) return currentRound;
+    const setIdx = getSetIndex(currentCycleIndex);
+    const setRepeat = setRepeatCounts[setIdx] || 1;
+    if (setRepeat <= 1) return 0;
+    return currentRound;
+  };
+
+  const getDisplayTotal = (): number => {
+    if (setBoundaries.length === 0) return totalRounds;
+    const setIdx = getSetIndex(currentCycleIndex);
+    return setRepeatCounts[setIdx] || 0;
+  };
 
   useEffect(() => {
     return () => {
@@ -81,7 +105,9 @@ export default function TimerRunScreen({ cycles, onExit, roundIncrementIndices =
       return;
     }
     
-    if (roundIncrementIndices.includes(nextIndex)) {
+    if (setBoundaries.length > 0 && setBoundaries.includes(nextIndex)) {
+      setCurrentRound(1);
+    } else if (roundIncrementIndices.includes(nextIndex)) {
       setCurrentRound(prev => prev + 1);
     }
     
@@ -91,8 +117,17 @@ export default function TimerRunScreen({ cycles, onExit, roundIncrementIndices =
 
   const previousCycle = () => {
     if (currentCycleIndex > 0) {
-      setCurrentCycleIndex(currentCycleIndex - 1);
-      setTimeRemaining(cycles[currentCycleIndex - 1].duration);
+      const prevIndex = currentCycleIndex - 1;
+      
+      if (setBoundaries.length > 0 && setBoundaries.includes(currentCycleIndex)) {
+        const prevSetIdx = getSetIndex(prevIndex);
+        setCurrentRound(setRepeatCounts[prevSetIdx] || 1);
+      } else if (roundIncrementIndices.includes(currentCycleIndex)) {
+        setCurrentRound(prev => Math.max(1, prev - 1));
+      }
+      
+      setCurrentCycleIndex(prevIndex);
+      setTimeRemaining(cycles[prevIndex].duration);
     }
   };
 
@@ -178,13 +213,17 @@ export default function TimerRunScreen({ cycles, onExit, roundIncrementIndices =
       <Text style={styles.countdown}>{formatTime(timeRemaining)}</Text>
 
       {/* Progress */}
-      <Text style={styles.progress}>
-        {totalRounds ? (
-          `${currentRound} / ${totalRounds}`
-        ) : (
-          `${currentCycleIndex + 1} / ${totalCycles}`
-        )}
-      </Text>
+      {getDisplayTotal() > 1 ? (
+        <Text style={styles.progress}>
+          Round {getDisplayRound()} / {getDisplayTotal()}
+        </Text>
+      ) : getDisplayTotal() > 0 ? (
+        null
+      ) : (
+        <Text style={styles.progress}>
+          {currentCycleIndex + 1} / {totalCycles}
+        </Text>
+      )}
 
       {/* Controls */}
       <View style={styles.controls}>
